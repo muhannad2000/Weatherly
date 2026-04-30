@@ -25,14 +25,11 @@ Weatherly is a JavaFX weather application that allows users to register, log in,
 1. Open the project in IntelliJ IDEA.
 2. Make sure Maven is loaded.
 3. Run the project using:
-
-
-## Developer
-
-Student Name: MHD Muhannad Alshatti
+mvn javafx:run
 
 ```bash
 mvn javafx:run
+
 
 Weatherly/
 ├── pom.xml
@@ -49,3 +46,6 @@ Weatherly/
 │               ├── chilly.png
 │               └── hot.png
 └── users.txt
+
+Developer
+Student Name: MHD Muhannad Alshatti
