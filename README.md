@@ -31,7 +31,6 @@ Weatherly is a JavaFX weather application that allows users to register, log in,
 
 Student Name: MHD Muhannad Alshatti
 
-Student ID: 25120102062
 ```bash
 mvn javafx:run
 
