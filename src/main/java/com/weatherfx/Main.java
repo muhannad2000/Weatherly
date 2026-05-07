@@ -15,6 +15,11 @@ import javafx.scene.shape.Line;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 public class Main extends Application {
 
     private Stage stage;
@@ -383,6 +388,92 @@ public class Main extends Application {
         stage.setTitle("Weatherly - Main");
         stage.setScene(scene);
         stage.show();
+
+        askForCurrentLocation(cityField, searchButton);
+    }
+
+    private void askForCurrentLocation(TextField cityField, Button searchButton) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Current Location");
+        alert.setHeaderText("Use your current location?");
+        alert.setContentText("Weatherly can detect your approximate city using your internet connection.");
+
+        ButtonType yesButton = new ButtonType("Yes");
+        ButtonType noButton = new ButtonType("No");
+        alert.getButtonTypes().setAll(yesButton, noButton);
+
+        alert.showAndWait().ifPresent(response -> {
+            if (response == yesButton) {
+                String currentCity = detectCurrentCity();
+
+                if (currentCity.equals("Unknown")) {
+                    Alert errorAlert = new Alert(Alert.AlertType.INFORMATION);
+                    errorAlert.setTitle("Location Not Found");
+                    errorAlert.setHeaderText(null);
+                    errorAlert.setContentText("Could not detect your current city. Please enter it manually.");
+                    errorAlert.showAndWait();
+                } else {
+                    cityField.setText(currentCity);
+                    searchButton.fire();
+                }
+            }
+        });
+    }
+
+    private String detectCurrentCity() {
+        try {
+            String apiUrl = "http://ip-api.com/json/";
+
+            URL url = new URL(apiUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream())
+            );
+
+            StringBuilder response = new StringBuilder();
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+
+            reader.close();
+
+            String result = response.toString();
+
+            if (!result.contains("\"status\":\"success\"")) {
+                return "Unknown";
+            }
+
+            String key = "\"city\":\"";
+            int start = result.indexOf(key);
+
+            if (start == -1) {
+                return "Unknown";
+            }
+
+            start = start + key.length();
+            int end = result.indexOf("\"", start);
+
+            if (end == -1) {
+                return "Unknown";
+            }
+
+            String city = result.substring(start, end);
+
+            if (city.isEmpty()) {
+                return "Unknown";
+            }
+
+            return city;
+
+        } catch (Exception e) {
+            return "Unknown";
+        }
     }
 
     private void setBackgroundImage(VBox box, String imagePath) {
