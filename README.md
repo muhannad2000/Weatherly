@@ -95,8 +95,10 @@ The data is encrypted before being written to the file and decrypted internally 
 ## Developer Verification
 
 A developer-only method is included inside UserFileManager.java:
-printAllUsersForDeveloper()
+```java
 
+printAllUsersForDeveloper()
+```
 This method can decrypt and print stored user records in the IntelliJ console for verification purposes.
 It is not part of the visible Weatherly user interface and is not enabled in the normal application flow.
 
