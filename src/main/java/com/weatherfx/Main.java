@@ -52,29 +52,7 @@ public class Main extends Application {
             if (username.isEmpty() || password.isEmpty()) {
                 messageLabel.setText("Please enter username and password.");
             } else {
-                boolean found = false;
-
-                try {
-                    java.io.BufferedReader reader = new java.io.BufferedReader(
-                            new java.io.FileReader("users.txt")
-                    );
-
-                    String line;
-
-                    while ((line = reader.readLine()) != null) {
-                        String[] parts = line.split(",");
-
-                        if (parts.length >= 2 && parts[0].equals(username) && parts[1].equals(password)) {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    reader.close();
-
-                } catch (Exception ex) {
-                    messageLabel.setText("Error reading file.");
-                }
+                boolean found = UserFileManager.validateLogin(username, password);
 
                 if (found) {
                     showMainScreen(username);
@@ -134,16 +112,17 @@ public class Main extends Application {
             } else if (!password.equals(confirmPassword)) {
                 messageLabel.setText("Passwords do not match.");
             } else {
-                try {
-                    java.io.FileWriter writer = new java.io.FileWriter("users.txt", true);
-                    writer.write(username + "," + password + "\n");
-                    writer.close();
+                String ipAddress = detectCurrentIpAddress();
+                String cityLocation = detectCurrentCity();
 
+                User newUser = new User(username, password, ipAddress, cityLocation);
+                boolean saved = UserFileManager.saveUser(newUser);
+
+                if (saved) {
                     messageLabel.setText("Account created successfully!");
                     showLoginScreen();
-
-                } catch (Exception ex) {
-                    messageLabel.setText("Error saving user.");
+                } else {
+                    messageLabel.setText("Username already exists or user data could not be saved.");
                 }
             }
         });
@@ -476,6 +455,62 @@ public class Main extends Application {
         }
     }
 
+    private String detectCurrentIpAddress() {
+        try {
+            String apiUrl = "http://ip-api.com/json/";
+
+            URL url = new URL(apiUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream())
+            );
+
+            StringBuilder response = new StringBuilder();
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+
+            reader.close();
+
+            String result = response.toString();
+
+            if (!result.contains("\"status\":\"success\"")) {
+                return "Unknown";
+            }
+
+            String key = "\"query\":\"";
+            int start = result.indexOf(key);
+
+            if (start == -1) {
+                return "Unknown";
+            }
+
+            start = start + key.length();
+            int end = result.indexOf("\"", start);
+
+            if (end == -1) {
+                return "Unknown";
+            }
+
+            String ipAddress = result.substring(start, end);
+
+            if (ipAddress.isEmpty()) {
+                return "Unknown";
+            }
+
+            return ipAddress;
+
+        } catch (Exception e) {
+            return "Unknown";
+        }
+    }
+
     private void setBackgroundImage(VBox box, String imagePath) {
         String imageUrl = getClass().getResource(imagePath).toExternalForm();
 
@@ -548,6 +583,7 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
+        //UserFileManager.printAllUsersForDeveloper();
         launch(args);
     }
 }
